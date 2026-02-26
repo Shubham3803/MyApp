@@ -12,12 +12,10 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        {/* Register the bottom tab navigator route (file: app/Navigation/BottonNavbar.jsx) */}
-        <Stack.Screen
-          name="Navigation/BottomNavbar"
-          options={{ headerShown: false }}
-        />
+      <Stack screenOptions={{ headerShown: false }}>
+        {/* Step 1: Splash loads first - app/index.jsx = route "index" */}
+        <Stack.Screen name="index" />
+        <Stack.Screen name="Navigation/BottomNavbar" />
       </Stack>
       <StatusBar style="auto" />
     </ThemeProvider>
