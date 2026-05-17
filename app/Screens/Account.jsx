@@ -1,13 +1,13 @@
 import React from "react";
-import { Button, Text, View } from "react-native";
+import { Button, Text, View, FlatList } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 // import { Button } from '@react-navigation/elements'
+
 import { useRouter } from "expo-router";
-import { FlatList } from "react-native-gesture-handler";
 import TopNavBar from "../Navigation/TopNavBar";
 import EditProfile from "../components/EditProfile";
-
+import { auth } from "../config/fireBase";
 const Account = () => {
   const ProfileOption = [
     {
@@ -25,9 +25,24 @@ const Account = () => {
   ];
 
   const router = useRouter();
+
+  const handleLogout = async () => {
+    try {
+      await auth().signOut();
+      router.replace("/Screens/login");
+    } catch (err) {
+      // Keep it simple: show the firebase error message in an alert.
+      // eslint-disable-next-line no-alert
+      alert(err?.message || "Logout failed");
+    }
+  };
   return (
     <SafeAreaView style={{ flex: 1 }}>
-      <TopNavBar />
+      <TopNavBar 
+      rightIcon="log-out-outline" 
+       showBackButton={true}
+        navText={"Skill Analytics"}
+      rightIconAction={handleLogout} />
 
       {/* <ScrollView style={{}}> */}
         <View
@@ -45,17 +60,17 @@ const Account = () => {
               />
             )}
           />
-
+{/* 
           <EditProfile
             title={"Profile"}
             iconName="person-outline"
             onPress={() => router.push("/Pages/MyProfile")}
-          />
+          /> */}
 
-          <Button
+          {/* <Button
             title="next page"
             onPress={() => router.push("/Screens/Appointment")}
-          />
+          /> */}
         </View>
       {/* </ScrollView> */}
     </SafeAreaView>

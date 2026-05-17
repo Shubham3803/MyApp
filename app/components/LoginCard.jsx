@@ -5,13 +5,12 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  KeyboardAvoidingView,
-  Platform,
   Alert
 } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { auth } from '../config/fireBase';
 
 const ICON_COLOR = 'rgba(255,255,255,0.9)';
 const PLACEHOLDER_COLOR = 'rgba(255,255,255,0.7)';
@@ -20,7 +19,6 @@ const LoginCard = ({ mode = 'signup' }) => {
   const router = useRouter();
   const isSignUp = mode === 'signup';
 
-  const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -28,145 +26,150 @@ const LoginCard = ({ mode = 'signup' }) => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
 
-  const handleSubmit = () => {
-  // 1️⃣ Check all fields filled
-  if (!fullName || !email || !password || !confirmPassword) {
-    Alert.alert('Error', 'Please fill all fields');
-  } 
-  // 2️⃣ Simple email validation
-  else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    Alert.alert('Error', 'Please enter a valid email');
-  } 
-  // 3️⃣ Password match check
-  else if (password !== confirmPassword) {
-    Alert.alert('Error', 'Passwords do not match');
-  } 
-  // 4️⃣ If everything is correct → navigate
-  else {
-    router.replace('Navigation/BottomNavbar');
-  }
-};
+  const handleSubmit = async () => {
+    const normalizedEmail = email.trim().toLowerCase();
+
+    try {
+      // Validation differs between login vs signup.
+      if (isSignUp) {
+        if (!normalizedEmail || !password || !confirmPassword) {
+          Alert.alert('Error', 'Please fill all fields');
+          return;
+        }
+
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+          Alert.alert('Error', 'Please enter a valid email');
+          return;
+        }
+
+        if (password !== confirmPassword) {
+          Alert.alert('Error', 'Passwords do not match');
+          return;
+        }
+
+        await auth().createUserWithEmailAndPassword(normalizedEmail, password);
+      } else {
+        if (!normalizedEmail || !password) {
+          Alert.alert('Error', 'Please enter email and password');
+          return;
+        }
+
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+          Alert.alert('Error', 'Please enter a valid email');
+          return;
+        }
+
+        await auth().signInWithEmailAndPassword(normalizedEmail, password);
+      }
+
+      // If everything is successful -> navigate to app.
+      router.replace('/Navigation/BottomNavbar');
+    } catch (err) {
+      const message = err?.message || 'Authentication failed';
+      Alert.alert('Authentication Error', message);
+    }
+  };
 
   const handleSwitchMode = () => {
     if (isSignUp) {
-      router.replace('Screens/login');
+      router.replace('/Screens/login');
     } else {
-      router.replace('Screens/signUp');
+      router.replace('/Screens/signUp');
     }
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={styles.keyboardView}
-    >
-      <BlurView intensity={70} tint="dark" style={styles.card}>
-        <Text style={styles.title}>
-          {isSignUp ? 'Create Account' : 'Welcome Back'}
-        </Text>
-        <Text style={styles.subtitle}>
-          {isSignUp ? 'Sign up to get started' : 'Log in to continue'}
-        </Text>
+    <BlurView intensity={70} tint="dark" style={styles.card}>
+      <Text style={styles.title}>
+        {isSignUp ? 'Create Account' : 'Welcome Back'}
+      </Text>
+      <Text style={styles.subtitle}>
+        {isSignUp ? 'Sign up to get started' : 'Log in to continue'}
+      </Text>
 
-        {isSignUp && (
-          <View style={styles.inputContainer}>
-            <Ionicons name="person-outline" size={20} color={ICON_COLOR} style={styles.inputIcon} />
-            <TextInput
-              style={styles.input}
-              placeholder="Full Name"
-              placeholderTextColor={PLACEHOLDER_COLOR}
-              value={fullName}
-              onChangeText={setFullName}
-              autoCapitalize="words"
+      <View style={styles.inputContainer}>
+        <Ionicons name="mail-outline" size={20} color={ICON_COLOR} style={styles.inputIcon} />
+        <TextInput
+          style={styles.input}
+          placeholder="Email"
+          placeholderTextColor={PLACEHOLDER_COLOR}
+          value={email}
+          onChangeText={setEmail}
+          keyboardType="email-address"
+          autoCapitalize="none"
+          />
+      </View>
+
+      <View style={styles.inputContainer}>
+        <Ionicons name="lock-closed-outline" size={20} color={ICON_COLOR} style={styles.inputIcon} />
+        <TextInput
+          style={[styles.input, styles.inputWithIcon]}
+          placeholder="Password"
+          placeholderTextColor={PLACEHOLDER_COLOR}
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry={!showPassword}
+          />
+        <TouchableOpacity
+          onPress={() => setShowPassword(!showPassword)}
+          style={styles.eyeButton}
+        >
+          <Ionicons
+            name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+            size={20}
+            color={ICON_COLOR}
             />
-          </View>
-        )}
+        </TouchableOpacity>
+      </View>
 
+      {isSignUp && (
         <View style={styles.inputContainer}>
-          <Ionicons name="mail-outline" size={20} color={ICON_COLOR} style={styles.inputIcon} />
+          <Ionicons
+            name="lock-closed-outline"
+            size={20}
+            color={ICON_COLOR}
+            style={styles.inputIcon}
+            />
           <TextInput
             style={styles.input}
-            placeholder="Email"
+            placeholder="Confirm Password"
             placeholderTextColor={PLACEHOLDER_COLOR}
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-          />
-        </View>
-
-        <View style={styles.inputContainer}>
-          <Ionicons name="lock-closed-outline" size={20} color={ICON_COLOR} style={styles.inputIcon} />
-          <TextInput
-            style={[styles.input, styles.inputWithIcon]}
-            placeholder="Password"
-            placeholderTextColor={PLACEHOLDER_COLOR}
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry={!showPassword}
-          />
+            value={confirmPassword}
+            onChangeText={setConfirmPassword}
+            secureTextEntry={!showConfirmPassword}
+            />
           <TouchableOpacity
-            onPress={() => setShowPassword(!showPassword)}
-            style={styles.eyeButton}
-          >
-            <Ionicons
-              name={showPassword ? 'eye-off-outline' : 'eye-outline'}
-              size={20}
-              color={ICON_COLOR}
-            />
-          </TouchableOpacity>
-        </View>
-
-        {isSignUp && (
-          <View style={styles.inputContainer}>
-            <Ionicons
-              name="lock-closed-outline"
-             size={20} color={ICON_COLOR} style={styles.inputIcon} />
-            <TextInput
-              style={styles.input}
-              placeholder="Confirm Password"
-              placeholderTextColor={PLACEHOLDER_COLOR}
-              value={confirmPassword}
-              onChangeText={setConfirmPassword}
-              secureTextEntry={!showConfirmPassword}
-            />
-             <TouchableOpacity
             onPress={() => setShowConfirmPassword(!showConfirmPassword)}
             style={styles.eyeButton}
-          >
+            >
             <Ionicons
               name={showConfirmPassword ? 'eye-off-outline' : 'eye-outline'}
               size={20}
               color={ICON_COLOR}
-            />
-          </TouchableOpacity>
-          </View>
-        )}
-
-        <TouchableOpacity onPress={handleSubmit} activeOpacity={0.8} style={styles.primaryButton}>
-          <Text style={styles.primaryButtonText}>
-            {isSignUp ? 'Sign Up' : 'Log In'}
-          </Text>
-        </TouchableOpacity>
-
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>
-            {isSignUp ? 'Already have an account? ' : "Don't have an account? "}
-          </Text>
-          <TouchableOpacity onPress={handleSwitchMode} activeOpacity={0.7}>
-            <Text style={styles.footerLink}>{isSignUp ? 'Log In' : 'Sign Up'}</Text>
+              />
           </TouchableOpacity>
         </View>
-      </BlurView>
-    </KeyboardAvoidingView>
+      )}
+
+      <TouchableOpacity onPress={handleSubmit} activeOpacity={0.8} style={styles.primaryButton}>
+        <Text style={styles.primaryButtonText}>
+          {isSignUp ? 'Sign Up' : 'Log In'}
+        </Text>
+      </TouchableOpacity>
+
+      <View style={styles.footer}>
+        <Text style={styles.footerText}>
+          {isSignUp ? 'Already have an account? ' : "Don't have an account? "}
+        </Text>
+        <TouchableOpacity onPress={handleSwitchMode} activeOpacity={0.7}>
+          <Text style={styles.footerLink}>{isSignUp ? 'Log In' : 'Sign Up'}</Text>
+        </TouchableOpacity>
+      </View>
+    </BlurView>
   );
 };
 
 const styles = StyleSheet.create({
-  keyboardView: {
-    width: '100%',
-    maxWidth: 400,
-  },
   card: {
     overflow: 'hidden',
     borderRadius: 20,

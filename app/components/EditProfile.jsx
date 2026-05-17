@@ -16,7 +16,7 @@ const EditProfile = ({ title, onPress, iconName }) => {
           justifyContent: 'flex-start',
           paddingVertical: 14,
           paddingHorizontal: 16,
-          borderRadius: 12,
+          borderRadius:35 ,
           backgroundColor: '#F1F5F9',
           marginBottom: 12,
           alignSelf: 'center', // center horizontally

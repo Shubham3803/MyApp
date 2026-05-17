@@ -26,12 +26,9 @@ export const authScreenStyles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    // Avoid re-centering on keyboard open/close which can leave a bottom gap.
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 24,
-    paddingVertical: 30,
-    // Helps ensure the form and button stay above the keyboard.
-    // paddingBottom: 56,
+    paddingVertical: 32,
   },
 });
